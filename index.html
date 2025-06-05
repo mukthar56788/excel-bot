@@ -81,60 +81,66 @@
   <div class="chat-container">
     <h2>Ask Me Anything about Excel Data</h2>
     <form id="chatForm">
+      <input type="file" id="excelFile" accept=".xlsx,.xls,.csv" required />
       <input type="text" id="userInput" placeholder="Ask a question..." required />
       <button type="submit">Send</button>
     </form>
+
     <div class="chatbox" id="chatBox"></div>
   </div>
 
-  <script>
-    const form = document.getElementById("chatForm");
-    const input = document.getElementById("userInput");
-    const chatBox = document.getElementById("chatBox");
+<script>
+  const form = document.getElementById("chatForm");
+  const input = document.getElementById("userInput");
+  const chatBox = document.getElementById("chatBox");
 
-    form.addEventListener("submit", async function (e) {
-      e.preventDefault();
-      const message = input.value.trim();
-      if (!message) return;
+  form.addEventListener("submit", async function (e) {
+    e.preventDefault();
+    const message = input.value.trim();
+    const fileInput = document.getElementById("excelFile");
+    const file = fileInput.files[0];
 
-      addBubble(message, "user");
-      input.value = "";
-      addBubble("Thinking...", "bot", true);
+    if (!message || !file) return alert("Please select a file and enter a question");
 
-      try {
-        const res = await fetch("https://hook.eu2.make.com/aabvyovdveusuo6eyo6sj6uwocl8w1fa", {
-          method: "POST",
-          body: JSON.stringify({ question: message }),
-          headers: {
-            "Content-Type": "application/json"
-          }
-        });
+    addBubble(message, "user");
+    input.value = "";
+    addBubble("Analyzing your Excel file...", "bot", true);
 
-        const data = await res.json();
-        removeThinkingBubble();
-        addBubble(data.reply || "Sorry, I couldn't process that.", "bot");
-      } catch (err) {
-        removeThinkingBubble();
-        addBubble("Oops! Something went wrong.", "bot");
-      }
-    });
+    const formData = new FormData();
+    formData.append("question", message);
+    formData.append("file", file);
 
-    function addBubble(text, type, isThinking = false) {
-      const bubble = document.createElement("div");
-      bubble.className = `bubble ${type}`;
-      bubble.textContent = text;
-      bubble.dataset.thinking = isThinking;
-      chatBox.appendChild(bubble);
-      chatBox.scrollTop = chatBox.scrollHeight;
+    try {
+      const res = await fetch("YOUR_WEBHOOK_URL", {
+        method: "POST",
+        body: formData
+      });
+
+      const data = await res.json();
+      removeThinkingBubble();
+      addBubble(data.reply || "Sorry, I couldn't find the answer.", "bot");
+    } catch (err) {
+      removeThinkingBubble();
+      addBubble("Something went wrong.", "bot");
     }
+  });
 
-    function removeThinkingBubble() {
-      const bubbles = [...document.querySelectorAll('.bubble.bot')];
-      const last = bubbles[bubbles.length - 1];
-      if (last && last.dataset.thinking === "true") {
-        last.remove();
-      }
+  function addBubble(text, type, isThinking = false) {
+    const bubble = document.createElement("div");
+    bubble.className = `bubble ${type}`;
+    bubble.textContent = text;
+    bubble.dataset.thinking = isThinking;
+    chatBox.appendChild(bubble);
+    chatBox.scrollTop = chatBox.scrollHeight;
+  }
+
+  function removeThinkingBubble() {
+    const bubbles = [...document.querySelectorAll('.bubble.bot')];
+    const last = bubbles[bubbles.length - 1];
+    if (last && last.dataset.thinking === "true") {
+      last.remove();
     }
-  </script>
+  }
+</script>
 </body>
 </html>
